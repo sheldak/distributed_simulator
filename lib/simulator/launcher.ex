@@ -8,39 +8,25 @@ defmodule Simulator.Launcher do
   import Nx.Defn
 
   alias Simulator.Phase.{RemoteConsequences, RemotePlans, RemoteSignal, StartIteration}
-  alias Simulator.Printer
+  alias Simulator.{Functions, Printer}
 
-  def start(grid, objects_state) do
-    create_plan = &@module_prefix.PlanCreator.create_plan/6
-    is_update_valid? = &@module_prefix.PlanResolver.is_update_valid?/2
-    apply_action = &@module_prefix.PlanResolver.apply_action/3
-    apply_consequence = &@module_prefix.PlanResolver.apply_consequence/3
-    generate_signal = &@module_prefix.Cell.generate_signal/1
-    signal_factor = &@module_prefix.Cell.signal_factor/1
+  def start(grid) do
+    functions = {
+      &@module_prefix.PlanCreator.create_plan/6,
+      &@module_prefix.PlanResolver.is_update_valid?/2,
+      &@module_prefix.PlanResolver.apply_action/3,
+      &@module_prefix.PlanResolver.apply_consequence/3,
+      &@module_prefix.Cell.generate_signal/1,
+      &@module_prefix.Cell.signal_factor/1
+    }
 
-    simulate(
-      grid,
-      objects_state,
-      create_plan,
-      is_update_valid?,
-      apply_action,
-      apply_consequence,
-      generate_signal,
-      signal_factor
-    )
+    grid
+    |> simulate(objects_state, functions)
     |> Printer.write_all_to_files()
   end
 
-  defnp simulate(
-          grid,
-          objects_state,
-          create_plan,
-          is_update_valid?,
-          apply_action,
-          apply_consequence,
-          generate_signal,
-          signal_factor
-        ) do
+  defnp simulate(grid, objects_state, functions) do
+    {create_plan, is_update_valid?, apply_action, apply_consequence, generate_signal, signal_factor} = functions
     {x_size, y_size, z_size} = Nx.shape(grid)
 
     {_iteration, _grid, _objects_state, visualization} =
