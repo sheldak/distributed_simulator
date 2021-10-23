@@ -5,7 +5,7 @@ defmodule Evacuation do
 
   use Evacuation.Constants
 
-  alias Simulator.{Printer, WorkerActor}
+  alias Simulator.{Launcher, Printer, WorkerActor}
 
   @doc """
   Runs the simulation.
@@ -18,8 +18,10 @@ defmodule Evacuation do
 
     clean_grid_iterations()
 
-    WorkerActor.start(grid: grid, objects_state: objects_state)
+    # WorkerActor.start(grid: grid, objects_state: objects_state)
     Printer.write_to_file(grid, "grid_0")
+
+    Launcher.start(grid, objects_state)
     :ok
   end
 

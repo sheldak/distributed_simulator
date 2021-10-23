@@ -11,13 +11,10 @@ defmodule Evacuation.PlanResolver do
       both_equal(action, @add_person, object, @empty) -> Nx.tensor(1)
       both_equal(action, @add_person, object, @exit) -> Nx.tensor(1)
       both_equal(action, @add_person, object, @fire) -> Nx.tensor(1)
-
       both_equal(action, @remove_person, object, @person) -> Nx.tensor(1)
-
       both_equal(action, @create_fire, object, @empty) -> Nx.tensor(1)
       both_equal(action, @create_fire, object, @person) -> Nx.tensor(1)
       both_equal(action, @create_fire, object, @exit) -> Nx.tensor(1)
-
       true -> Nx.tensor(0)
     end
   end

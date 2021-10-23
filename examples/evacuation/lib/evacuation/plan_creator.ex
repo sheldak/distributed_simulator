@@ -22,7 +22,8 @@ defmodule Evacuation.PlanCreator do
   defnp create_plan_person(i, j, grid) do
     # TODO all people go up when signal is 0
     {_i, _j, _direction, signals, _grid} =
-      while {i, j, direction = @dir_top, signals = Nx.broadcast(Nx.tensor(-@infinity), {9}), grid},
+      while {i, j, direction = @dir_top, signals = Nx.broadcast(Nx.tensor(-@infinity), {9}),
+             grid},
             Nx.less_equal(direction, @dir_top_left) do
         {x, y} = shift({i, j}, direction)
 
