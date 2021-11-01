@@ -10,7 +10,7 @@ defmodule Simulator.Launcher do
   alias Simulator.Phase.{RemoteConsequences, RemotePlans, RemoteSignal, StartIteration}
   alias Simulator.{Functions, Printer}
 
-  def start(grid) do
+  def start(grid, objects_state) do
     functions = {
       &@module_prefix.PlanCreator.create_plan/6,
       &@module_prefix.PlanResolver.is_update_valid?/2,
