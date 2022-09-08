@@ -81,24 +81,24 @@ defmodule Simulator.WorkerActor do
 
     if neighbors_count == processed_neighbors + 1 do
       prev = System.monotonic_time()
-      {updated_grid, accepted_plans, updated_objects_state} =
-        Plans.process_plans(
-          grid,
-          plans,
-          objects_state,
-          &is_update_valid?/2,
-          &apply_action/3
-        )
-      # {updated_grid, accepted_plans, updated_objects_state} = EXLA.jit(
-      #   fn g, p, os -> Plans.process_plans(
-      #     g,
-      #     p,
-      #     os,
+      # {updated_grid, accepted_plans, updated_objects_state} =
+      #   Plans.process_plans(
+      #     grid,
+      #     plans,
+      #     objects_state,
       #     &is_update_valid?/2,
       #     &apply_action/3
-      #   ) end,
-      #   [grid, plans, objects_state]
-      # )
+      #   )
+      {updated_grid, accepted_plans, updated_objects_state} = EXLA.jit(
+        fn g, p, os -> Plans.process_plans(
+          g,
+          p,
+          os,
+          &is_update_valid?/2,
+          &apply_action/3
+        ) end,
+        [grid, plans, objects_state]
+      )
       next = System.monotonic_time()
       IO.puts("process_plans: #{next - prev}")
 
@@ -151,27 +151,28 @@ defmodule Simulator.WorkerActor do
 
     if neighbors_count == processed_neighbors + 1 do
       prev = System.monotonic_time()
-      {updated_grid, objects_state} =
-        Consequences.apply_consequences(
-          grid,
-          objects_state,
-          plans,
-          accepted_plans,
-          &apply_consequence/3
-        )
-      # {updated_grid, objects_state} = EXLA.jit(&Consequences.apply_consequences/5).(
-      # grid,
-      # objects_state,
-      # plans,
-      # accepted_plans,
-      # &apply_consequence/3)
+      # {updated_grid, objects_state} =
+      #   Consequences.apply_consequences(
+      #     grid,
+      #     objects_state,
+      #     plans,
+      #     accepted_plans,
+      #     &apply_consequence/3
+      #   )
+      {updated_grid, objects_state} = EXLA.jit(
+        fn g, os, p, ap -> Consequences.apply_consequences(
+      g,
+      os,
+      p,
+      ap,
+      &apply_consequence/3) end, [grid, objects_state, plans, accepted_plans])
       next = System.monotonic_time()
       IO.puts("apply_consequences: #{next - prev}")
 
       prev = System.monotonic_time()
-      # signal_update =
-      #   EXLA.jit(fn -> Signal.calculate_signal_updates(updated_grid, &generate_signal/1) end).()
-      signal_update = Signal.calculate_signal_updates(updated_grid, &generate_signal/1)
+      signal_update =
+        EXLA.jit(fn ug -> Signal.calculate_signal_updates(ug, &generate_signal/1) end, [updated_grid])
+      # signal_update = Signal.calculate_signal_updates(updated_grid, &generate_signal/1)
       next = System.monotonic_time()
       IO.puts("calculate_signal_updates: #{next - prev}")
 
@@ -275,10 +276,10 @@ defmodule Simulator.WorkerActor do
     prev = System.monotonic_time()
     plans = Plans.create_plans(iteration, grid, objects_state, &create_plan/5)
     # plans = EXLA.jit(
-    #   fn ->
-    #     Plans.create_plans(iteration, grid, objects_state, &create_plan/5)
-    #   end
-    # ).()
+    #   fn i, g, os ->
+    #     Plans.create_plans(i, g, os, &create_plan/5)
+    #   end, [iteration, grid, objects_state]
+    # )
     next = System.monotonic_time()
     IO.puts("process_plans: #{next - prev}")
 
