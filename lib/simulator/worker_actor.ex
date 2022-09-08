@@ -80,6 +80,7 @@ defmodule Simulator.WorkerActor do
     plans = Nx.put_slice(plans, location, tensor)
 
     if neighbors_count == processed_neighbors + 1 do
+      prev = System.monotonic_time()
       {updated_grid, accepted_plans, updated_objects_state} =
         Plans.process_plans(
           grid,
@@ -88,6 +89,18 @@ defmodule Simulator.WorkerActor do
           &is_update_valid?/2,
           &apply_action/3
         )
+      # {updated_grid, accepted_plans, updated_objects_state} = EXLA.jit(
+      #   fn g, p, os -> Plans.process_plans(
+      #     g,
+      #     p,
+      #     os,
+      #     &is_update_valid?/2,
+      #     &apply_action/3
+      #   ) end,
+      #   [grid, plans, objects_state]
+      # )
+      next = System.monotonic_time()
+      IO.puts("process_plans: #{next - prev}")
 
       distribute_consequences(state, updated_grid, updated_objects_state, accepted_plans)
 
@@ -137,6 +150,7 @@ defmodule Simulator.WorkerActor do
     accepted_plans = put_at(accepted_plans, location_plans, new_accepted_plans)
 
     if neighbors_count == processed_neighbors + 1 do
+      prev = System.monotonic_time()
       {updated_grid, objects_state} =
         Consequences.apply_consequences(
           grid,
@@ -145,11 +159,21 @@ defmodule Simulator.WorkerActor do
           accepted_plans,
           &apply_consequence/3
         )
+      # {updated_grid, objects_state} = EXLA.jit(&Consequences.apply_consequences/5).(
+      # grid,
+      # objects_state,
+      # plans,
+      # accepted_plans,
+      # &apply_consequence/3)
+      next = System.monotonic_time()
+      IO.puts("apply_consequences: #{next - prev}")
 
-      signal_update =
-        EXLA.jit(fn grid -> Signal.calculate_signal_updates(grid, &generate_signal/1) end, [
-          updated_grid
-        ])
+      prev = System.monotonic_time()
+      # signal_update =
+      #   EXLA.jit(fn -> Signal.calculate_signal_updates(updated_grid, &generate_signal/1) end).()
+      signal_update = Signal.calculate_signal_updates(updated_grid, &generate_signal/1)
+      next = System.monotonic_time()
+      IO.puts("calculate_signal_updates: #{next - prev}")
 
       distribute_signal(state, signal_update)
 
@@ -248,7 +272,15 @@ defmodule Simulator.WorkerActor do
       Printer.write_to_file(state)
     end
 
+    prev = System.monotonic_time()
     plans = Plans.create_plans(iteration, grid, objects_state, &create_plan/5)
+    # plans = EXLA.jit(
+    #   fn ->
+    #     Plans.create_plans(iteration, grid, objects_state, &create_plan/5)
+    #   end
+    # ).()
+    next = System.monotonic_time()
+    IO.puts("process_plans: #{next - prev}")
 
     distribute_plans(state, plans)
 

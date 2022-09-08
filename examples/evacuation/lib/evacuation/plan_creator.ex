@@ -26,7 +26,7 @@ defmodule Evacuation.PlanCreator do
         {x, y} = shift({i, j}, direction)
 
         signals =
-          if Nx.equal(grid[x][y][0], @empty) or Nx.equal(grid[x][y][0], @exit) do
+          if Nx.logical_or(Nx.equal(grid[x][y][0], @empty), Nx.equal(grid[x][y][0], @exit)) do
             Nx.put_slice(signals, [direction], Nx.broadcast(grid[i][j][direction], {1}))
           else
             Nx.put_slice(signals, [direction], Nx.broadcast(-@infinity, {1}))

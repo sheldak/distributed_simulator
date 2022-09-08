@@ -31,8 +31,9 @@ defmodule DistributedSimulator.MixProject do
 
   defp deps do
     [
-      {:exla, "~> 0.1.0-dev", github: "elixir-nx/nx", sparse: "exla"},
-      {:nx, "~> 0.1.0-dev", github: "elixir-nx/nx", sparse: "nx", override: true},
+      {:exla, "~> 0.1.0-dev", github: "elixir-nx/nx", sparse: "exla", tag: "v0.1.0"},
+      {:nx, "~> 0.1.0-dev", github: "elixir-nx/nx", sparse: "nx", tag: "v0.1.0", override: true},
+      {:complex, "~> 0.3.0"},
       {:ex_doc, "~> 0.24", only: :dev}
     ]
   end

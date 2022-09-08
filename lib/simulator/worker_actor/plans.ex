@@ -144,7 +144,7 @@ defmodule Simulator.WorkerActor.Plans do
   defnp on_the_edge(grid, {x, y}) do
     {x_size, y_size, _z_size} = Nx.shape(grid)
 
-    Nx.less_equal(x, 0) or Nx.less_equal(y, 0) or
-      Nx.greater_equal(x, x_size - 1) or Nx.greater_equal(y, y_size - 1)
+    Nx.logical_or(Nx.logical_or(Nx.less_equal(x, 0), Nx.less_equal(y, 0)),
+      Nx.logical_or(Nx.greater_equal(x, x_size - 1), Nx.greater_equal(y, y_size - 1)))
   end
 end

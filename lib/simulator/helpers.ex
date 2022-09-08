@@ -24,7 +24,7 @@ defmodule Simulator.Helpers do
       Nx.equal(direction, @dir_bottom_left) -> {x + 1, y - 1}
       Nx.equal(direction, @dir_left) -> {x, y - 1}
       Nx.equal(direction, @dir_top_left) -> {x - 1, y - 1}
-      true -> {0, 0}
+      :otherwise -> {0, 0}
     end
   end
 
